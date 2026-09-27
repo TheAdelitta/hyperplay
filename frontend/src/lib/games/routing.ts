@@ -39,26 +39,31 @@ const LAB_SCHEMA_PROMPT = `You convert a passage from an educational text into a
 
 Read the passage and find the central quantitative relationship it teaches. Identify the two quantities a student would most usefully be able to change, and the single quantity that results from them. Then design a short sequence of challenges that walks the student through the concept.
 
-Choose one visualMode:
-- "curve" when the relationship unfolds over time, such as population growth, radioactive decay, or cooling. Requires a series object whose "variable" is NOT one of the two control keys. If time itself is one of the sliders, use "meter" instead.
-- "fill" when the output is a physical amount contained in something, such as gas volume, tank level, or concentration.
-- "meter" when the output is an accumulating total, such as money, distance covered, or mass produced.
-- "trajectory" only for projectile motion through space. The two controls must be the launch angle in degrees (unit "°") and the launch speed in m/s, with gravity as the constant "g".
+Decide in this order.
+
+First, choose the two controls: the two quantities a student would most usefully change.
+
+Then choose one visualMode by asking these questions in order and taking the first that fits:
+1. Is it projectile motion through space? Use "trajectory". The two controls must be the launch angle in degrees (unit "°") and the launch speed in m/s, with gravity as the constant "g".
+2. Is one of your two controls time (years, seconds, days)? Use "meter". The output is read at the time the slider sets, and there is no series. Compound interest with a years slider is this case.
+3. Does the output change over time, with time NOT one of your controls? Use "curve", so the student sees the shape of the change: population growth, radioactive decay, cooling. Time runs along the x axis as the series variable, which must not be a control key. Logistic growth with sliders for r and K is this case. Never put time in "constants" to read the output at one moment: if the challenge is "reach N by year 25", that is still "curve", with the series running over time and "markAt": 25.
+4. Is the output a physical amount held in something, such as gas volume, tank level, or concentration? Use "fill".
+5. Otherwise use "meter" for a total, such as money, distance covered, or mass produced.
 
 Return exactly this shape:
 
 {
   "gameType": "lab",
-  "visualMode": "curve" | "fill" | "meter" | "trajectory",
   "concept": string,
   "sourceSummary": string,
   "formula": string,
-  "expression": string,
   "controls": [ControlA, ControlB],
   "constants": { "name": number },
+  "visualMode": "curve" | "fill" | "meter" | "trajectory",
+  "series": { "variable": string, "label": string, "unit": string, "min": number, "max": number, "steps": 120, "expression": string, "markAt": number } | null,
+  "expression": string,
   "output": { "label": string, "unit": string, "decimals": number, "min": number, "max": number },
   "stages": [Stage, ...],
-  "series": { "variable": string, "label": string, "unit": string, "min": number, "max": number, "steps": 120, "expression": string, "markAt": number } | null,
   "readouts": [ { "label": string, "expression": string, "unit": string, "decimals": number } ],
   "completion": string,
   "difficulty": "middle" | "high" | "college",

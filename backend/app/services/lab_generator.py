@@ -68,10 +68,14 @@ def parse_lab_response(
 class AzureLabGenerator:
     def __init__(self, settings: Settings) -> None:
         self.deployment = settings.azure_openai_deployment
+        # Low tokens-per-minute quotas return 429 under bursts; the SDK backs off and
+        # honours Retry-After, so a few more retries ride out a short spike.
         self.client = AsyncAzureOpenAI(
             azure_endpoint=settings.azure_openai_endpoint,
             api_key=settings.azure_openai_api_key,
             api_version=settings.azure_openai_api_version,
+            max_retries=4,
+            timeout=60,
         )
 
     async def generate(
