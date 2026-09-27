@@ -1,0 +1,6 @@
+{
+  "_generated": "GENERATED from frontend/src/lib/games. Do not edit; run `npm run export:contracts`.",
+  "middle": "Use whole numbers wherever possible. Keep slider ranges wide and the target tolerance generous, about 8 percent of the reachable span. Write all three hints in plain language and avoid symbols in the hint text.",
+  "high": "Use one decimal place at most. Set the target tolerance to about 4 percent of the reachable span. Hints may reference the formula by name.",
+  "college": "Use the notation and units the chapter uses. Set the target tolerance to about 2 percent of the reachable span. Hints should point at the concept rather than the arithmetic."
+}

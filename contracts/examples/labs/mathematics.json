@@ -1,0 +1,119 @@
+{
+  "gameType": "lab",
+  "visualMode": "meter",
+  "concept": "Compound interest and exponential growth",
+  "sourceSummary": "The chapter develops A = P(1 + r)^t for annual compounding and shows that the rate sits in the base while time sits in the exponent.",
+  "formula": "A = P(1 + r)^t",
+  "expression": "P * (1 + r / SCALE) ^ t",
+  "controls": [
+    {
+      "key": "r",
+      "label": "Annual interest rate",
+      "unit": "%",
+      "min": 1,
+      "max": 15,
+      "step": 0.5,
+      "default": 5,
+      "decimals": 1
+    },
+    {
+      "key": "t",
+      "label": "Years invested",
+      "unit": "yr",
+      "min": 1,
+      "max": 40,
+      "step": 1,
+      "default": 10,
+      "decimals": 0
+    }
+  ],
+  "constants": {
+    "P": 1000,
+    "SCALE": 100
+  },
+  "output": {
+    "label": "Final balance",
+    "unit": "USD",
+    "decimals": 0,
+    "min": 0,
+    "max": 12000
+  },
+  "stages": [
+    {
+      "challenge": "The rate is fixed at 5 percent. Double your money to 2,000 dollars.",
+      "teaches": "Time alone, with the rate held still.",
+      "target": {
+        "value": 2000,
+        "tolerance": 100
+      },
+      "lock": {
+        "key": "r",
+        "value": 5,
+        "note": "Interest rate is fixed for this challenge"
+      },
+      "hints": [
+        "Only the years slider can move. Drag it slowly and watch the early years.",
+        "Notice how little the first few years add compared with the last few.",
+        "The rule of 72 says 72 divided by 5 is about 14 years."
+      ],
+      "debriefing": "It took about 14 years. The rate never changed, but each year the same percentage was applied to a larger balance, so the growth accelerated on its own."
+    },
+    {
+      "challenge": "Now the horizon is fixed at 20 years. Reach 2,900 dollars.",
+      "teaches": "The rate alone, with time held still.",
+      "target": {
+        "value": 2900,
+        "tolerance": 80
+      },
+      "lock": {
+        "key": "t",
+        "value": 20,
+        "note": "The investment period is fixed for this challenge"
+      },
+      "hints": [
+        "Only the rate can move now. Small changes do more than you expect.",
+        "The rate sits inside the base, so it is applied twenty times over.",
+        "You need about 5.5 percent."
+      ],
+      "debriefing": "A rate change of half a percent moved the final balance by hundreds of dollars. That is because the rate is inside the base and compounds on itself every period."
+    },
+    {
+      "challenge": "Both controls are unlocked. Reach 5,000 dollars, then find a second way.",
+      "teaches": "Rate and time trading off against each other.",
+      "target": {
+        "value": 5000,
+        "tolerance": 120
+      },
+      "hints": [
+        "A higher rate needs fewer years. A longer horizon needs a lower rate.",
+        "Find one answer, then deliberately halve the rate and see how many years it costs you.",
+        "5 percent over 33 years works. So does 8 percent over 21 years."
+      ],
+      "debriefing": "You found more than one route to 5,000 dollars. A higher return shortens the wait and a longer horizon lowers the return required. That trade off is the practical content of the whole formula."
+    }
+  ],
+  "readouts": [
+    {
+      "label": "Interest earned",
+      "expression": "P * (1 + r / SCALE) ^ t - P",
+      "unit": "USD",
+      "decimals": 0
+    },
+    {
+      "label": "Doubling time, rule of 72",
+      "expression": "72 / r",
+      "unit": "yr",
+      "decimals": 1
+    },
+    {
+      "label": "Growth multiple",
+      "expression": "(1 + r / SCALE) ^ t",
+      "unit": "×",
+      "decimals": 2
+    }
+  ],
+  "completion": "You isolated time, then the rate, then traded them against each other. Time sits in the exponent and rewards patience. The rate sits in the base and compounds on itself. Every saving decision is a choice between the two.",
+  "difficulty": "high",
+  "subject": "Mathematics",
+  "courseLabel": "Algebra II · Grade 10"
+}

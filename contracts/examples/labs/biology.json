@@ -1,0 +1,128 @@
+{
+  "gameType": "lab",
+  "visualMode": "curve",
+  "concept": "Logistic population growth, the roles of r and K",
+  "sourceSummary": "The chapter contrasts exponential and logistic growth and stresses that the intrinsic rate of increase sets the steepness while the carrying capacity sets the ceiling.",
+  "formula": "N(t) = K / (1 + ((K − N₀) / N₀) · e^(−rt))",
+  "expression": "K / (1 + ((K - N0) / N0) * exp(0 - r * 15))",
+  "controls": [
+    {
+      "key": "r",
+      "label": "Intrinsic growth rate",
+      "unit": "per year",
+      "min": 0.05,
+      "max": 0.4,
+      "step": 0.01,
+      "default": 0.2,
+      "decimals": 2
+    },
+    {
+      "key": "K",
+      "label": "Carrying capacity",
+      "unit": "deer",
+      "min": 100,
+      "max": 1000,
+      "step": 10,
+      "default": 500,
+      "decimals": 0
+    }
+  ],
+  "constants": {
+    "N0": 20
+  },
+  "output": {
+    "label": "Population at year 15",
+    "unit": "deer",
+    "decimals": 0,
+    "min": 0,
+    "max": 1000
+  },
+  "stages": [
+    {
+      "challenge": "The reserve holds 500 deer. Reach 400 of them by year 15.",
+      "teaches": "The growth rate alone, with the ceiling held still.",
+      "target": {
+        "value": 400,
+        "tolerance": 14
+      },
+      "lock": {
+        "key": "K",
+        "value": 500,
+        "note": "Carrying capacity is fixed for this challenge"
+      },
+      "hints": [
+        "Only the growth rate can move. Watch how the curve bends.",
+        "A higher rate does not raise the ceiling. It reaches the ceiling sooner.",
+        "You need a rate near 0.30 per year."
+      ],
+      "debriefing": "The growth rate controls the steepness of the climb, not where it stops. You reached 80 percent of the ceiling by year 15 without changing the ceiling at all."
+    },
+    {
+      "challenge": "Now the growth rate is stuck at 0.15. Reach 150 deer by year 15.",
+      "teaches": "The carrying capacity alone, with the rate held still.",
+      "target": {
+        "value": 150,
+        "tolerance": 7
+      },
+      "lock": {
+        "key": "r",
+        "value": 0.15,
+        "note": "Growth rate is fixed for this challenge"
+      },
+      "hints": [
+        "Only the carrying capacity can move now.",
+        "With a slow rate the population is still early on its curve, so raising the ceiling raises where it has got to.",
+        "A capacity near 640 gets you there."
+      ],
+      "debriefing": "A slow growing population is nowhere near its ceiling at year 15, so the ceiling still limits it. Notice you could not reach 400 this way at all. A low rate caps what is achievable in a fixed time."
+    },
+    {
+      "challenge": "Both controls are unlocked. Reach 350 deer by year 15, then find a second way to do it.",
+      "teaches": "Two different populations passing through the same point.",
+      "target": {
+        "value": 350,
+        "tolerance": 12
+      },
+      "hints": [
+        "Start with a fast rate and a low ceiling.",
+        "Then try a slow rate and a high ceiling. Compare the two curve shapes.",
+        "r = 0.32 with K = 400 works. So does r = 0.22 with K = 870."
+      ],
+      "debriefing": "A fast growing population near its ceiling and a slow growing population far from a much higher ceiling both pass through 350 at year 15. The endpoint is the same. The curves are not. This is why field ecologists need both numbers rather than one."
+    }
+  ],
+  "series": {
+    "variable": "t",
+    "label": "Years",
+    "unit": "yr",
+    "min": 0,
+    "max": 30,
+    "steps": 120,
+    "expression": "K / (1 + ((K - N0) / N0) * exp(0 - r * t))",
+    "markAt": 15
+  },
+  "readouts": [
+    {
+      "label": "Fastest growth at",
+      "expression": "K / 2",
+      "unit": "deer",
+      "decimals": 0
+    },
+    {
+      "label": "Starting population",
+      "expression": "N0",
+      "unit": "deer",
+      "decimals": 0
+    },
+    {
+      "label": "Percent of ceiling",
+      "expression": "100 * (K / (1 + ((K - N0) / N0) * exp(0 - r * 15))) / K",
+      "unit": "%",
+      "decimals": 0
+    }
+  ],
+  "completion": "You isolated each parameter, then saw them trade off. The rate bends the curve. The capacity sets the ceiling. A population is described by both, and knowing only its size at one moment tells you almost nothing about which it was.",
+  "difficulty": "college",
+  "subject": "Biology",
+  "courseLabel": "General Biology I · First year"
+}

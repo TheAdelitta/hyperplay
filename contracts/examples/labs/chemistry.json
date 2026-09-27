@@ -1,0 +1,119 @@
+{
+  "gameType": "lab",
+  "visualMode": "fill",
+  "concept": "Ideal gas law, volume as a response to pressure and temperature",
+  "sourceSummary": "The chapter derives PV = nRT and rearranges it to solve for volume, noting that pressure and temperature push volume in opposite directions.",
+  "formula": "V = nRT / P",
+  "expression": "(n * R * T) / P",
+  "controls": [
+    {
+      "key": "P",
+      "label": "Pressure",
+      "unit": "kPa",
+      "min": 50,
+      "max": 300,
+      "step": 1,
+      "default": 100,
+      "decimals": 0
+    },
+    {
+      "key": "T",
+      "label": "Temperature",
+      "unit": "K",
+      "min": 150,
+      "max": 600,
+      "step": 1,
+      "default": 300,
+      "decimals": 0
+    }
+  ],
+  "constants": {
+    "n": 1,
+    "R": 8.314
+  },
+  "output": {
+    "label": "Volume",
+    "unit": "L",
+    "decimals": 1,
+    "min": 0,
+    "max": 60
+  },
+  "stages": [
+    {
+      "challenge": "Hold the temperature at 300 K. Compress the gas to 18.0 L.",
+      "teaches": "Pressure alone, with temperature held still.",
+      "target": {
+        "value": 18,
+        "tolerance": 0.5
+      },
+      "lock": {
+        "key": "T",
+        "value": 300,
+        "note": "Temperature is fixed for this challenge"
+      },
+      "hints": [
+        "Only pressure can move. Push it up and watch the piston.",
+        "Volume and pressure are inversely proportional. More pressure, less volume.",
+        "V = nRT / P. At 300 K you need a pressure near 139 kPa."
+      ],
+      "debriefing": "Pressure and volume are inversely proportional. Raising the pressure squeezed the same number of particles into a smaller space. That is Boyle’s law."
+    },
+    {
+      "challenge": "Now hold the pressure at 100 kPa. Expand the gas to 40.0 L.",
+      "teaches": "Temperature alone, with pressure held still.",
+      "target": {
+        "value": 40,
+        "tolerance": 0.6
+      },
+      "lock": {
+        "key": "P",
+        "value": 100,
+        "note": "Pressure is fixed for this challenge"
+      },
+      "hints": [
+        "Only temperature can move this time. Which direction should it go?",
+        "Hotter particles move faster and push the piston outward.",
+        "Volume is directly proportional to absolute temperature. You need about 481 K."
+      ],
+      "debriefing": "Volume and temperature are directly proportional. Heating the gas made its particles strike the walls harder, so it expanded. That is Charles’s law, and it points the opposite way to pressure."
+    },
+    {
+      "challenge": "Both controls are unlocked. Set the gas to exactly 25.0 L.",
+      "teaches": "The two effects competing in one equation.",
+      "target": {
+        "value": 25,
+        "tolerance": 0.5
+      },
+      "hints": [
+        "There is more than one answer here. Find any of them.",
+        "Raising both pressure and temperature together can leave the volume unchanged.",
+        "Try 100 kPa at 300 K. Then try 200 kPa at 600 K and compare the two piston positions."
+      ],
+      "debriefing": "You found one of many conditions that give 25.0 L. Because two variables appear in one equation, a whole family of pressure and temperature pairs satisfies it. That is why a gas has no fixed volume of its own."
+    }
+  ],
+  "readouts": [
+    {
+      "label": "Temperature",
+      "expression": "T - 273.15",
+      "unit": "°C",
+      "decimals": 0
+    },
+    {
+      "label": "Moles of gas",
+      "expression": "n",
+      "unit": "mol",
+      "decimals": 2
+    },
+    {
+      "label": "Particle energy",
+      "expression": "T / 300",
+      "unit": "× baseline",
+      "decimals": 2
+    }
+  ],
+  "completion": "You separated the two effects, then combined them. Pressure compresses, temperature expands, and the volume you observe is whichever wins. A gas has no volume of its own, only the volume its conditions allow.",
+  "difficulty": "high",
+  "subject": "Chemistry",
+  "courseLabel": "Chemistry I · Grade 11"
+}

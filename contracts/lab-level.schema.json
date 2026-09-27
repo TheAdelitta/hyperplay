@@ -1,0 +1,457 @@
+{
+  "$defs": {
+    "LabControl": {
+      "properties": {
+        "key": {
+          "maxLength": 24,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "unit": {
+          "default": "",
+          "maxLength": 30,
+          "title": "Unit",
+          "type": "string"
+        },
+        "min": {
+          "title": "Min",
+          "type": "number"
+        },
+        "max": {
+          "title": "Max",
+          "type": "number"
+        },
+        "step": {
+          "title": "Step",
+          "type": "number"
+        },
+        "default": {
+          "type": "number",
+          "title": "Default"
+        },
+        "decimals": {
+          "default": 1,
+          "maximum": 6,
+          "minimum": 0,
+          "title": "Decimals",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "min",
+        "max",
+        "step",
+        "default"
+      ],
+      "title": "LabControl",
+      "type": "object"
+    },
+    "LabLevel": {
+      "properties": {
+        "gameType": {
+          "const": "lab",
+          "default": "lab",
+          "title": "Gametype",
+          "type": "string"
+        },
+        "visualMode": {
+          "enum": [
+            "trajectory",
+            "curve",
+            "fill",
+            "meter"
+          ],
+          "title": "Visualmode",
+          "type": "string"
+        },
+        "concept": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Concept",
+          "type": "string"
+        },
+        "sourceSummary": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Sourcesummary",
+          "type": "string"
+        },
+        "formula": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Formula",
+          "type": "string"
+        },
+        "expression": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Expression",
+          "type": "string"
+        },
+        "controls": {
+          "items": {
+            "$ref": "#/$defs/LabControl"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Controls",
+          "type": "array"
+        },
+        "constants": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Constants",
+          "type": "object"
+        },
+        "output": {
+          "$ref": "#/$defs/LabOutput"
+        },
+        "stages": {
+          "items": {
+            "$ref": "#/$defs/LabStage"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Stages",
+          "type": "array"
+        },
+        "series": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LabSeries"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "readouts": {
+          "items": {
+            "$ref": "#/$defs/LabReadout"
+          },
+          "title": "Readouts",
+          "type": "array"
+        },
+        "completion": {
+          "default": "",
+          "maxLength": 600,
+          "title": "Completion",
+          "type": "string"
+        },
+        "difficulty": {
+          "default": "high",
+          "enum": [
+            "middle",
+            "high",
+            "college"
+          ],
+          "title": "Difficulty",
+          "type": "string"
+        },
+        "subject": {
+          "default": "",
+          "maxLength": 60,
+          "title": "Subject",
+          "type": "string"
+        },
+        "courseLabel": {
+          "default": "",
+          "maxLength": 120,
+          "title": "Courselabel",
+          "type": "string"
+        }
+      },
+      "required": [
+        "visualMode",
+        "concept",
+        "sourceSummary",
+        "formula",
+        "expression",
+        "controls",
+        "output",
+        "stages"
+      ],
+      "title": "LabLevel",
+      "type": "object"
+    },
+    "LabOutput": {
+      "properties": {
+        "label": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "unit": {
+          "default": "",
+          "maxLength": 30,
+          "title": "Unit",
+          "type": "string"
+        },
+        "decimals": {
+          "default": 1,
+          "maximum": 6,
+          "minimum": 0,
+          "title": "Decimals",
+          "type": "integer"
+        },
+        "min": {
+          "title": "Min",
+          "type": "number"
+        },
+        "max": {
+          "title": "Max",
+          "type": "number"
+        }
+      },
+      "required": [
+        "label",
+        "min",
+        "max"
+      ],
+      "title": "LabOutput",
+      "type": "object"
+    },
+    "LabReadout": {
+      "properties": {
+        "label": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "expression": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Expression",
+          "type": "string"
+        },
+        "unit": {
+          "default": "",
+          "maxLength": 30,
+          "title": "Unit",
+          "type": "string"
+        },
+        "decimals": {
+          "default": 1,
+          "maximum": 6,
+          "minimum": 0,
+          "title": "Decimals",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "label",
+        "expression"
+      ],
+      "title": "LabReadout",
+      "type": "object"
+    },
+    "LabSeries": {
+      "properties": {
+        "variable": {
+          "maxLength": 24,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Variable",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "unit": {
+          "default": "",
+          "maxLength": 30,
+          "title": "Unit",
+          "type": "string"
+        },
+        "min": {
+          "title": "Min",
+          "type": "number"
+        },
+        "max": {
+          "title": "Max",
+          "type": "number"
+        },
+        "steps": {
+          "default": 120,
+          "maximum": 500,
+          "minimum": 10,
+          "title": "Steps",
+          "type": "integer"
+        },
+        "expression": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Expression",
+          "type": "string"
+        },
+        "markAt": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Markat"
+        }
+      },
+      "required": [
+        "variable",
+        "label",
+        "min",
+        "max",
+        "expression"
+      ],
+      "title": "LabSeries",
+      "type": "object"
+    },
+    "LabStage": {
+      "properties": {
+        "challenge": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Challenge",
+          "type": "string"
+        },
+        "teaches": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Teaches",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/StageTarget"
+        },
+        "lock": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StageLock"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "hints": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Hints",
+          "type": "array"
+        },
+        "debriefing": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Debriefing",
+          "type": "string"
+        }
+      },
+      "required": [
+        "challenge",
+        "teaches",
+        "target",
+        "debriefing"
+      ],
+      "title": "LabStage",
+      "type": "object"
+    },
+    "StageLock": {
+      "properties": {
+        "key": {
+          "maxLength": 24,
+          "title": "Key",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        },
+        "note": {
+          "default": "This control is fixed for this challenge",
+          "maxLength": 160,
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "value"
+      ],
+      "title": "StageLock",
+      "type": "object"
+    },
+    "StageTarget": {
+      "properties": {
+        "value": {
+          "title": "Value",
+          "type": "number"
+        },
+        "tolerance": {
+          "title": "Tolerance",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "tolerance"
+      ],
+      "title": "StageTarget",
+      "type": "object"
+    },
+    "UnfittableResult": {
+      "properties": {
+        "gameType": {
+          "const": "unfittable",
+          "default": "unfittable",
+          "title": "Gametype",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 400,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "suggestion": {
+          "maxLength": 400,
+          "minLength": 1,
+          "title": "Suggestion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason",
+        "suggestion"
+      ],
+      "title": "UnfittableResult",
+      "type": "object"
+    }
+  },
+  "anyOf": [
+    {
+      "$ref": "#/$defs/LabLevel"
+    },
+    {
+      "$ref": "#/$defs/UnfittableResult"
+    }
+  ]
+}
