@@ -20,6 +20,7 @@ import type { LabLevel } from './types';
 /** The order the model should write fields in: controls before visualMode. */
 const KEY_ORDER: (keyof LabLevel)[] = [
 	'gameType',
+	'detectedSubject',
 	'concept',
 	'sourceSummary',
 	'formula',
@@ -40,6 +41,7 @@ const KEY_ORDER: (keyof LabLevel)[] = [
 function example(level: LabLevel): string {
 	const ordered: Record<string, unknown> = {};
 	for (const key of KEY_ORDER) ordered[key] = level[key] ?? null;
+	ordered.detectedSubject = level.detectedSubject ?? level.subject;
 	ordered.stages = level.stages.map((st) => ({ ...st, lock: st.lock ?? null }));
 	return JSON.stringify(ordered, null, 2);
 }

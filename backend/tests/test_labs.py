@@ -285,3 +285,13 @@ def test_moved_target_is_a_clean_number_and_the_text_matches() -> None:
     assert value == float(f"{value:.2g}") or value == float(f"{value:.3g}")
     assert "1000000000" not in stage.challenge
     assert f"{int(value):,}" in stage.challenge
+
+
+def test_detected_subject_is_kept_alongside_the_students_choice() -> None:
+    # A chemistry file uploaded as History: the level is labelled with the student's
+    # choice, and the model's judgement travels with it so the UI can ask to confirm.
+    raw = load("chemistry")
+    raw["detectedSubject"] = "Chemistry"
+    result = parse_lab_response(json.dumps(raw), "History", "World History", "high")
+    assert isinstance(result, LabLevel)
+    assert (result.subject, result.detectedSubject) == ("History", "Chemistry")

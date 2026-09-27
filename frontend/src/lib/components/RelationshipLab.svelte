@@ -31,6 +31,8 @@
 	let pastCurves: Point[][] = [];
 	let pastValues: number[] = [];
 	let pastShots: Point[][] = [];
+	/** Slider values at the last run. Nothing is drawn from live slider moves: predict, then run. */
+	let lastRun: Record<string, number> | null = null;
 	let shot: Point[] = [];
 	let animFrame = 0;
 
@@ -66,6 +68,7 @@
 		pastValues = [];
 		pastShots = [];
 		shot = [];
+		lastRun = null;
 		draw();
 	}
 
@@ -89,6 +92,7 @@
 		const delta = output - target.value;
 		hit = Math.abs(delta) <= target.tolerance;
 		ran = true;
+		lastRun = { ...values };
 
 		const dp = level.output.decimals;
 		const deltaText = hit
@@ -172,11 +176,12 @@
 
 		try {
 			if (level.visualMode === 'curve') {
-				drawCurve(f, evaluateSeries(level, values), pastCurves.slice(0, -1), level, target, done);
+				const current = lastRun ? evaluateSeries(level, lastRun) : [];
+				drawCurve(f, current, pastCurves.slice(0, -1), level, target, done);
 			} else if (level.visualMode === 'fill') {
-				drawFill(f, evaluateOutput(level, values), level, target, done);
+				drawFill(f, lastRun ? output : null, level, target, done);
 			} else if (level.visualMode === 'meter') {
-				drawMeter(f, evaluateOutput(level, values), level, target, pastValues.slice(0, -1), done);
+				drawMeter(f, lastRun ? output : null, level, target, pastValues.slice(0, -1), done);
 			} else {
 				const { xMax, yMax } = trajectoryScale();
 				drawTrajectory(f, shot, pastShots, target.value, target.tolerance, xMax, yMax, done, values[angleCtl.key]);
@@ -204,7 +209,8 @@
 		cancelAnimationFrame(animFrame);
 	});
 
-	function readoutValue(expression: string, decimals: number, values: Record<string, number>): string {
+	function readoutValue(expression: string, decimals: number, values: Record<string, number> | null): string {
+		if (!values) return '—';
 		try {
 			const names = [...level.controls.map((c) => c.key), ...Object.keys(level.constants)];
 			return compile(expression, names)({ ...level.constants, ...values }).toLocaleString(undefined, {
@@ -230,7 +236,9 @@
 	<!-- a div, not <header>: the site stylesheet gives every <header> a fixed 90px height -->
 	<div class="lab-head">
 		<div>
-			<p class="eyebrow">{level.subject.toUpperCase()} · {level.courseLabel}</p>
+			<p class="eyebrow">
+				{level.subject.toUpperCase()}{level.courseLabel && level.courseLabel !== level.subject ? ` · ${level.courseLabel}` : ''}
+			</p>
 			<h2>{level.concept}</h2>
 			<p class="sub">{level.sourceSummary}</p>
 		</div>
@@ -302,7 +310,7 @@
 			{#each level.readouts.slice(0, 3) as r (r.label)}
 				<div class="readout">
 					<span>{r.label}</span>
-					<strong>{readoutValue(r.expression, r.decimals, values)} {r.unit}</strong>
+					<strong>{readoutValue(r.expression, r.decimals, lastRun)} {r.unit}</strong>
 				</div>
 			{/each}
 		</div>

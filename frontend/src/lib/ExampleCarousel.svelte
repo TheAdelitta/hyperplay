@@ -1,31 +1,122 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
+
+  // Plot area inside the 440 x 210 viewBox.
+  const X0 = 58, X1 = 420, Y0 = 162, Y1 = 22;
+
   const examples = [
-    {title:'Projectile motion',subtitle:'Physics · playable sample',caption:'Watch how a change in angle affects the arc.',color:'#1375e6',tag:'Explore'},
-    {title:'Free fall',subtitle:'Physics · concept preview',caption:'Watch distance grow faster with each second.',color:'#189368',tag:'Observe'},
-    {title:'Quadratic equations',subtitle:'Algebra · concept preview',caption:'Watch a changing coefficient reshape the curve.',color:'#cc8622',tag:'Visualize'}
+    {
+      title: 'Projectile motion',
+      subtitle: 'Physics',
+      caption: 'At 45°, a ball launched at 20 m/s lands about 41 m away.',
+      color: '#1375e6',
+      xLabel: 'Distance (m)', yLabel: 'Height (m)',
+      xMax: 45, yMax: 12,
+      // y = x·tan45° − g·x² / (2·v²·cos²45°), v = 20 m/s, g = 9.8
+      f: (x) => x - (9.8 * x * x) / (2 * 400 * 0.5),
+      xEnd: 40.8
+    },
+    {
+      title: 'Compound interest',
+      subtitle: 'Mathematics',
+      caption: 'At 7% a year, $1,000 grows to about $7,600 in 30 years.',
+      color: '#cc8622',
+      xLabel: 'Years', yLabel: 'Balance ($)',
+      xMax: 30, yMax: 8000,
+      f: (t) => 1000 * Math.pow(1.07, t),
+      xEnd: 30
+    },
+    {
+      title: 'Population growth',
+      subtitle: 'Biology',
+      caption: 'Growth slows as the population nears its carrying capacity of 500.',
+      color: '#189368',
+      xLabel: 'Years', yLabel: 'Population',
+      xMax: 30, yMax: 550,
+      // logistic: K = 500, r = 0.3, N0 = 20
+      f: (t) => 500 / (1 + 24 * Math.exp(-0.3 * t)),
+      xEnd: 30
+    }
   ];
-  let current=0,progress=0,paused=false,reduced=false,frame,last=0;
-  $: item=examples[current];
-  $: curve=current===0?'M30 152 Q190 0 410 152':current===1?'M95 30 Q100 68 140 152':`M30 32 Q220 ${165+55*Math.sin(progress*2*Math.PI)} 410 32`;
-  function position(index,t){
-    const control=index===0?[[30,152],[190,0],[410,152]]:index===1?[[95,30],[100,68],[140,152]]:[[30,32],[220,165+55*Math.sin(t*2*Math.PI)],[410,32]];
-    const k=1-t;
-    return {x:k*k*control[0][0]+2*k*t*control[1][0]+t*t*control[2][0],y:k*k*control[0][1]+2*k*t*control[1][1]+t*t*control[2][1]};
+
+  let current = 0, progress = 1, frame, reduced = false;
+  $: item = examples[current];
+  $: points = sample(item);
+  $: shown = points.slice(0, Math.max(2, Math.ceil(points.length * progress)));
+  $: path = shown.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ');
+  $: dot = shown[shown.length - 1];
+
+  function px(x, e) { return X0 + (x / e.xMax) * (X1 - X0); }
+  function py(y, e) { return Y0 - (Math.max(0, y) / e.yMax) * (Y0 - Y1); }
+  function sample(e) {
+    return Array.from({ length: 81 }, (_, i) => {
+      const x = (e.xEnd * i) / 80;
+      return { x: px(x, e), y: py(e.f(x), e) };
+    });
   }
-  $: dot=position(current,progress);
-  function step(n){current=(current+n+examples.length)%examples.length;progress=0;last=0}
-  function tick(now){
-    if(!last)last=now;
-    const delta=Math.min(now-last,100);last=now;
-    if(!paused&&!reduced&&!document.hidden){progress+=delta/7000;if(progress>=1){progress-=1;current=(current+1)%examples.length}}
-    frame=requestAnimationFrame(tick);
+  function fmt(v) { return v >= 1000 ? v.toLocaleString() : String(v); }
+
+  // Draw the curve once (about 2.5 s) each time a card is shown, then stop.
+  function play() {
+    cancelAnimationFrame(frame);
+    if (reduced) { progress = 1; return; }
+    progress = 0;
+    const start = performance.now();
+    const tick = (now) => {
+      progress = Math.min(1, (now - start) / 2500);
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
   }
-  onMount(()=>{reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;if(!reduced)frame=requestAnimationFrame(tick);return()=>cancelAnimationFrame(frame)});
+  function step(n) { current = (current + n + examples.length) % examples.length; play(); }
+
+  onMount(() => { reduced = matchMedia('(prefers-reduced-motion: reduce)').matches; play(); });
+  onDestroy(() => cancelAnimationFrame(frame));
 </script>
-<div class="hero-visual" role="group" aria-label="Learning examples">
-  <div class="small-label"><span>A SAMPLE LEARNING MOMENT</span><span class="carousel-controls"><button type="button" on:click={()=>step(-1)} aria-label="Previous example">‹</button><span>{current+1}/3</span><button type="button" on:click={()=>step(1)} aria-label="Next example">›</button></span></div>
-  <div class="paper-head"><span class="paper-icon">📄</span><div><strong>{item.title}</strong><small>{item.subtitle}</small></div><span class="mini-arrow">→</span></div>
-  <div class="mini-play"><svg viewBox="0 0 440 190" role="img" aria-label={item.title+' animated concept preview'}><path d="M20 152H420 M20 115H420 M20 78H420" stroke="#dceaf7" stroke-width="1"/><path d={curve} fill="none" stroke={item.color} stroke-width="4" stroke-linecap="round"/><circle cx={dot.x} cy={dot.y} r="9" fill={item.color}/></svg><span class="mini-caption">{item.caption}</span></div>
-  <div class="paper-foot"><span class="chip blue">{item.tag}</span><span class="carousel-progress" aria-hidden="true"><i style:transform={'scaleX('+progress+')'}></i></span><button type="button" class="carousel-pause" on:click={()=>paused=!paused} aria-label={paused?'Resume animated examples':'Pause animated examples'}>{paused?'Play':'Pause'}</button></div>
+
+<div class="hero-visual" role="group" aria-roledescription="carousel" aria-label="Sample learning moments">
+  <div class="small-label">
+    <span>A SAMPLE LEARNING MOMENT</span>
+    <span class="carousel-controls">
+      <button type="button" on:click={() => step(-1)} aria-label="Previous example">‹</button>
+      <span aria-live="polite">{current + 1}/{examples.length}</span>
+      <button type="button" on:click={() => step(1)} aria-label="Next example">›</button>
+    </span>
+  </div>
+  <div class="paper-head">
+    <span class="paper-icon" aria-hidden="true">📄</span>
+    <div><strong>{item.title}</strong><small>{item.subtitle}</small></div>
+  </div>
+  <div class="mini-graph">
+    <svg viewBox="0 0 440 210" role="img" aria-label="{item.title}: {item.yLabel} against {item.xLabel}. {item.caption}">
+      {#each [0.25, 0.5, 0.75, 1] as g}
+        <line x1={X0} x2={X1} y1={Y0 - g * (Y0 - Y1)} y2={Y0 - g * (Y0 - Y1)} class="grid" />
+      {/each}
+      <line x1={X0} x2={X1} y1={Y0} y2={Y0} class="axis" />
+      <line x1={X0} x2={X0} y1={Y1} y2={Y0} class="axis" />
+      <text x={X0 - 8} y={Y0 + 4} class="tick" text-anchor="end">0</text>
+      <text x={X0 - 8} y={Y1 + 4} class="tick" text-anchor="end">{fmt(item.yMax)}</text>
+      <text x={X1} y={Y0 + 18} class="tick" text-anchor="end">{item.xMax}</text>
+      <text x={(X0 + X1) / 2} y={Y0 + 36} class="axis-label" text-anchor="middle">{item.xLabel}</text>
+      <text x="16" y={(Y0 + Y1) / 2} class="axis-label" text-anchor="middle" transform="rotate(-90 16 {(Y0 + Y1) / 2})">{item.yLabel}</text>
+      <path d={path} fill="none" stroke={item.color} stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+      {#if dot}<circle cx={dot.x} cy={dot.y} r="7" fill={item.color} />{/if}
+    </svg>
+  </div>
+  <p class="mini-caption-text">{item.caption}</p>
 </div>
+
+<style>
+  .mini-graph {
+    border: 1px solid #d8e9f7;
+    border-radius: 13px;
+    background: linear-gradient(#f7fbff, #eef6fd);
+    padding: 6px 8px 0;
+  }
+  svg { width: 100%; height: auto; display: block; }
+  .grid { stroke: #dceaf7; stroke-width: 1; }
+  .axis { stroke: #89b0d7; stroke-width: 2; }
+  .tick { font-size: 11px; fill: #6a83a1; }
+  .axis-label { font-size: 12px; font-weight: 700; fill: #506e91; }
+  .mini-caption-text { margin: 12px 2px 0; font-size: 14px; color: #506e91; line-height: 1.45; }
+</style>
