@@ -4,8 +4,15 @@ from pathlib import Path
 from app.models.simulation import SimulationSpec
 from app.services.specification_validator import validate_specification
 
-FIXTURE_PATH = (
-    Path(__file__).resolve().parents[3] / "contracts" / "examples" / "projectile-motion.json"
+# contracts/ sits at the repo root locally and at the package root when deployed.
+_HERE = Path(__file__).resolve()
+FIXTURE_PATH = next(
+    (
+        root / "contracts" / "examples" / "projectile-motion.json"
+        for root in (_HERE.parents[2], _HERE.parents[3])
+        if (root / "contracts").is_dir()
+    ),
+    _HERE.parents[3] / "contracts" / "examples" / "projectile-motion.json",
 )
 
 
