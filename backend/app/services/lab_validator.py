@@ -16,6 +16,13 @@ from app.services.lab_expression import Compiled, UnsafeExpressionError, compile
 
 GRID = 40
 MAX_SLIDER_POSITIONS = 2000
+# gpt-4.1-mini sizes "college" tolerances so tightly that a locked stage can have a
+# single winning slider notch among ~50. When admitting a second position is a modest
+# change, loosen to it; otherwise the single answer is deliberate and precise (the
+# handoff's own compound-interest stage 2 is one: 5.5% among 29 positions).
+MIN_WINNING_POSITIONS = 2
+MAX_LOOSEN_FACTOR = 2.0
+MAX_LOOSEN_SHARE_OF_TARGET = 0.05
 MAX_FAILURE_SHARE = 0.2
 # How far past its range a free control may be stretched to make the model's own target
 # reachable, as fractions of the original span. Keeping the model's number keeps its
@@ -219,6 +226,22 @@ def validate_lab_level(level: LabLevel) -> LabValidation:
                 new = f"{target.value:,.{level.output.decimals}f}"
                 stage.challenge = _replace_number(stage.challenge, old, new)
                 stage.hints = [h for h in stage.hints if not _mentions(h, old)]
+
+        if stage.lock:
+            s = sweep(stage.lock.key, stage.lock.value)
+            gaps = sorted(abs(o - target.value) for o in s.outputs)
+            winning = sum(g <= target.tolerance for g in gaps)
+            if winning < MIN_WINNING_POSITIONS <= len(gaps):
+                loosened = gaps[MIN_WINNING_POSITIONS - 1] * 1.001
+                if loosened <= min(
+                    target.tolerance * MAX_LOOSEN_FACTOR,
+                    abs(target.value) * MAX_LOOSEN_SHARE_OF_TARGET,
+                    (s.hi - s.lo) * 0.25,
+                ):
+                    target.tolerance = loosened
+                    problems.append(
+                        f"Stage {n} had {winning} winning slider position(s), tolerance loosened"
+                    )
 
         if not stage.hints:
             stage.hints = ["Change one slider at a time and watch which way the result moves."]

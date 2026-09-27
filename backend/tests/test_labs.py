@@ -245,3 +245,28 @@ def test_clamped_target_rewrites_challenge_and_drops_stale_hints() -> None:
     assert "5000" not in stage.challenge
     assert f"{stage.target.value:,.1f}" in stage.challenge
     assert not any("5000" in h for h in stage.hints)
+
+
+def test_single_notch_stage_is_loosened_when_the_change_is_modest() -> None:
+    # gpt-4.1-mini gave college biology stages exactly one winning slider notch where a
+    # second position was only 1.8x the tolerance away.
+    raw = load("biology")
+    raw["stages"][0]["target"]["tolerance"] = 3.0
+    result = validate_lab_level(LabLevel.model_validate(raw))
+    assert result.ok
+    level, stage = result.level, result.level.stages[0]
+    f = output_function(level)
+    free = next(c for c in level.controls if c.key != stage.lock.key)
+    count = int(round((free.max - free.min) / free.step)) + 1
+    fixed = {**level.constants, stage.lock.key: stage.lock.value}
+    outputs = [f({**fixed, free.key: free.min + k * free.step}) for k in range(count)]
+    wins = sum(abs(o - stage.target.value) <= stage.target.tolerance for o in outputs)
+    assert wins >= 2
+
+
+def test_deliberate_single_answer_is_left_alone() -> None:
+    # The handoff's compound-interest stage 2 has one winning rate (5.5%); the next
+    # position misses by 3x the tolerance, so loosening would accept a wrong answer.
+    result = validate_lab_level(LabLevel.model_validate(load("mathematics")))
+    assert result.problems == []
+    assert result.level.stages[1].target.tolerance == 80
