@@ -1,0 +1,85 @@
+{
+  "version": "1.0",
+  "id": "projectile-motion",
+  "template": "relationship_lab",
+  "title": "Projectile Motion",
+  "concept": "How launch conditions affect a projectile",
+  "learningObjective": "Predict how velocity and angle change a projectile's path.",
+  "sourceSummary": "Projectile range, height, and flight time depend on launch velocity, launch angle, and gravity.",
+  "sourceEvidence": [
+    {
+      "text": "The horizontal range of a projectile depends on its launch speed, angle, and gravitational acceleration.",
+      "location": "Hyperplay demo material"
+    }
+  ],
+  "variables": [
+    {
+      "id": "velocity",
+      "label": "Launch velocity",
+      "description": "The velocity at which the object is launched.",
+      "min": 5,
+      "max": 40,
+      "step": 1,
+      "defaultValue": 20,
+      "unit": "m/s"
+    },
+    {
+      "id": "angle",
+      "label": "Launch angle",
+      "description": "The angle of launch above the ground.",
+      "min": 10,
+      "max": 80,
+      "step": 1,
+      "defaultValue": 45,
+      "unit": "degrees"
+    },
+    {
+      "id": "gravity",
+      "label": "Gravity",
+      "description": "The downward acceleration caused by gravity.",
+      "min": 1.6,
+      "max": 15,
+      "step": 0.1,
+      "defaultValue": 9.8,
+      "unit": "m/s²"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "range",
+      "label": "Horizontal range",
+      "expression": "(velocity^2 * sin(2 * angle * pi / 180)) / gravity",
+      "unit": "m",
+      "precision": 1
+    },
+    {
+      "id": "height",
+      "label": "Maximum height",
+      "expression": "(velocity^2 * sin(angle * pi / 180)^2) / (2 * gravity)",
+      "unit": "m",
+      "precision": 1
+    },
+    {
+      "id": "flight_time",
+      "label": "Flight time",
+      "expression": "(2 * velocity * sin(angle * pi / 180)) / gravity",
+      "unit": "s",
+      "precision": 1
+    }
+  ],
+  "visualization": {
+    "kind": "trajectory",
+    "primaryMetricId": "range",
+    "secondaryMetricId": "height"
+  },
+  "challenge": {
+    "prompt": "Adjust the launch so the object lands between 35 and 45 meters.",
+    "metricId": "range",
+    "operator": "between",
+    "target": [35, 45],
+    "hint": "Try changing the angle before increasing the velocity.",
+    "successMessage": "You found a launch configuration that reaches the target."
+  },
+  "explanationTemplate": "At {velocity} m/s and {angle} degrees, the projectile travels {range} meters.",
+  "warnings": []
+}

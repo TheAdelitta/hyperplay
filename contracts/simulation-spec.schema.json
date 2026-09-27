@@ -1,0 +1,340 @@
+{
+  "$defs": {
+    "Challenge": {
+      "additionalProperties": false,
+      "properties": {
+        "prompt": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "metricId": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Metricid",
+          "type": "string"
+        },
+        "operator": {
+          "$ref": "#/$defs/ChallengeOperator"
+        },
+        "target": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 1,
+          "title": "Target",
+          "type": "array"
+        },
+        "hint": {
+          "maxLength": 240,
+          "minLength": 1,
+          "title": "Hint",
+          "type": "string"
+        },
+        "successMessage": {
+          "maxLength": 240,
+          "minLength": 1,
+          "title": "Successmessage",
+          "type": "string"
+        }
+      },
+      "required": [
+        "prompt",
+        "metricId",
+        "operator",
+        "target",
+        "hint",
+        "successMessage"
+      ],
+      "title": "Challenge",
+      "type": "object"
+    },
+    "ChallengeOperator": {
+      "enum": [
+        "gt",
+        "gte",
+        "lt",
+        "lte",
+        "equals",
+        "between"
+      ],
+      "title": "ChallengeOperator",
+      "type": "string"
+    },
+    "Metric": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "expression": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Expression",
+          "type": "string"
+        },
+        "unit": {
+          "maxLength": 30,
+          "title": "Unit",
+          "type": "string"
+        },
+        "precision": {
+          "default": 1,
+          "maximum": 6,
+          "minimum": 0,
+          "title": "Precision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "expression",
+        "unit"
+      ],
+      "title": "Metric",
+      "type": "object"
+    },
+    "SourceEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "location": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Location",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "location"
+      ],
+      "title": "SourceEvidence",
+      "type": "object"
+    },
+    "TemplateKind": {
+      "enum": [
+        "relationship_lab"
+      ],
+      "title": "TemplateKind",
+      "type": "string"
+    },
+    "Variable": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 240,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "min": {
+          "title": "Min",
+          "type": "number"
+        },
+        "max": {
+          "title": "Max",
+          "type": "number"
+        },
+        "step": {
+          "exclusiveMinimum": 0,
+          "title": "Step",
+          "type": "number"
+        },
+        "defaultValue": {
+          "title": "Defaultvalue",
+          "type": "number"
+        },
+        "unit": {
+          "maxLength": 30,
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "description",
+        "min",
+        "max",
+        "step",
+        "defaultValue",
+        "unit"
+      ],
+      "title": "Variable",
+      "type": "object"
+    },
+    "Visualization": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/VisualizationKind"
+        },
+        "primaryMetricId": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Primarymetricid",
+          "type": "string"
+        },
+        "secondaryMetricId": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondarymetricid"
+        }
+      },
+      "required": [
+        "kind",
+        "primaryMetricId"
+      ],
+      "title": "Visualization",
+      "type": "object"
+    },
+    "VisualizationKind": {
+      "enum": [
+        "trajectory",
+        "line",
+        "bar",
+        "meter"
+      ],
+      "title": "VisualizationKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "pattern": "^1\\.0$",
+      "title": "Version",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "template": {
+      "$ref": "#/$defs/TemplateKind"
+    },
+    "title": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "concept": {
+      "maxLength": 240,
+      "minLength": 1,
+      "title": "Concept",
+      "type": "string"
+    },
+    "learningObjective": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Learningobjective",
+      "type": "string"
+    },
+    "sourceSummary": {
+      "maxLength": 600,
+      "minLength": 1,
+      "title": "Sourcesummary",
+      "type": "string"
+    },
+    "sourceEvidence": {
+      "items": {
+        "$ref": "#/$defs/SourceEvidence"
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "title": "Sourceevidence",
+      "type": "array"
+    },
+    "variables": {
+      "items": {
+        "$ref": "#/$defs/Variable"
+      },
+      "maxItems": 3,
+      "minItems": 2,
+      "title": "Variables",
+      "type": "array"
+    },
+    "metrics": {
+      "items": {
+        "$ref": "#/$defs/Metric"
+      },
+      "maxItems": 6,
+      "minItems": 1,
+      "title": "Metrics",
+      "type": "array"
+    },
+    "visualization": {
+      "$ref": "#/$defs/Visualization"
+    },
+    "challenge": {
+      "$ref": "#/$defs/Challenge"
+    },
+    "explanationTemplate": {
+      "maxLength": 500,
+      "minLength": 1,
+      "title": "Explanationtemplate",
+      "type": "string"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 5,
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "version",
+    "id",
+    "template",
+    "title",
+    "concept",
+    "learningObjective",
+    "sourceSummary",
+    "sourceEvidence",
+    "variables",
+    "metrics",
+    "visualization",
+    "challenge",
+    "explanationTemplate"
+  ],
+  "title": "SimulationSpec",
+  "type": "object"
+}
