@@ -1,16 +1,12 @@
 # Hyperplay
 
-Hyperplay turns static educational material into an interactive simulation a learner can
-manipulate. A student uploads a PDF or pastes text; the backend extracts the material, asks an
-Azure-hosted model for a constrained `SimulationSpec`, validates it, and returns it to the React
-renderer. AI builds the artifact, but the learning experience is direct manipulation rather than
-a chatbot.
+HyperPlay turns educational material into interactive experiences students can manipulate. The Svelte frontend currently includes a playable projectile simulation and a file-selection flow. The backend accepts PDF or text input, extracts the material, and validates a constrained `SimulationSpec` generated through Azure AI. Connecting generated specs and uploads to the frontend is still in progress. The learning experience centers on experimentation rather than a chat window.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    A["React frontend"] --> B["FastAPI backend"]
+    A["Svelte frontend"] --> B["FastAPI backend"]
     B --> C["PDF extraction"]
     C --> D["Azure AI adapter"]
     D --> E["SimulationSpec validation"]
@@ -19,7 +15,7 @@ flowchart LR
 
 ## Team boundaries
 
-- **Frontend:** React UI, safe expression evaluation, visualization, controls, and challenge UX.
+- **Frontend:** Svelte UI, safe expression evaluation, visualization, controls, and challenge UX.
 - **Azure AI:** resource provisioning, deployment selection, and prompt experiments.
 - **Backend/integration:** repository contract, PDF extraction, Azure adapter, validation, errors,
   fallback demo, and integration testing.
