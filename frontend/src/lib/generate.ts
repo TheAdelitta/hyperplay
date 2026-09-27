@@ -35,37 +35,15 @@ const FILE_ERRORS = new Set([
 	'MISSING_SOURCE'
 ]);
 
-export const SAMPLES = [
-	{
-		file: 'chemistry-gas-laws-grade11.pdf',
-		label: 'Gas laws',
-		subject: 'Chemistry',
-		course: 'Chemistry I',
-		schoolLevel: 'High school',
-		year: '11th grade'
-	},
-	{
-		file: 'biology-population-growth-college.pdf',
-		label: 'Population growth',
-		subject: 'Biology',
-		course: 'General Biology I',
-		schoolLevel: 'College',
-		year: 'First year'
-	},
-	{
-		file: 'math-compound-interest-grade10.pdf',
-		label: 'Compound interest',
-		subject: 'Math',
-		course: 'Algebra II',
-		schoolLevel: 'High school',
-		year: '10th grade'
-	}
-] as const;
-
-export async function loadSample(file: string): Promise<File> {
-	const res = await fetch(`/samples/${file}`);
-	if (!res.ok) throw new Error(`Sample ${file} failed to load (${res.status})`);
-	return new File([await res.blob()], file, { type: 'application/pdf' });
+/**
+ * True when the model judged the file to be a different subject from the one the student
+ * picked, e.g. a chemistry chapter uploaded as History. "Other" never mismatches.
+ */
+export function subjectMismatch(chosen: string, outcome: Outcome): boolean {
+	if (outcome.kind !== 'level' || outcome.source === 'sample') return false;
+	const detected = outcome.level.detectedSubject;
+	if (!detected || chosen === 'Other' || detected === 'Other') return false;
+	return canonicalSubject(chosen).toLowerCase() !== canonicalSubject(detected).toLowerCase();
 }
 
 /** A built-in level, always labelled as a sample and never presented as generated. */

@@ -39,7 +39,9 @@ const LAB_SCHEMA_PROMPT = `You convert a passage from an educational text into a
 
 Read the passage and find the central quantitative relationship it teaches. Identify the two quantities a student would most usefully be able to change, and the single quantity that results from them. Then design a short sequence of challenges that walks the student through the concept.
 
-Decide in this order.
+First, judge which subject the passage itself belongs to from its content, and report it as "detectedSubject". The student also tells you a subject; use it as context, but if the passage is clearly from a different subject, report the passage's real subject. Never let the student's choice change what the passage is about.
+
+Decide the rest in this order.
 
 First, choose the two controls: the two quantities a student would most usefully change.
 
@@ -54,6 +56,7 @@ Return exactly this shape:
 
 {
   "gameType": "lab",
+  "detectedSubject": "Physics" | "Chemistry" | "Biology" | "Mathematics" | "Computer Science" | "History" | "Economics" | "Other",
   "concept": string,
   "sourceSummary": string,
   "formula": string,

@@ -74,6 +74,9 @@ class LabStage(LenientModel):
 
 class LabLevel(LenientModel):
     gameType: Literal["lab"] = "lab"
+    # What the model judged the material to be; the front end asks the student to confirm
+    # when it differs from the subject they picked.
+    detectedSubject: str = Field(default="", max_length=60)
     visualMode: Literal["trajectory", "curve", "fill", "meter"]
     concept: str = Field(min_length=1, max_length=200)
     sourceSummary: str = Field(min_length=1, max_length=600)

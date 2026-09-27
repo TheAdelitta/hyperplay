@@ -86,6 +86,8 @@ export interface Stage {
 
 export interface LabLevel {
 	gameType: 'lab';
+	/** The subject the model judged the uploaded material to be, which may differ from the student's pick. */
+	detectedSubject?: string;
 	visualMode: VisualMode;
 
 	concept: string;

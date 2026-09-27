@@ -63,6 +63,12 @@
           "title": "Gametype",
           "type": "string"
         },
+        "detectedSubject": {
+          "default": "",
+          "maxLength": 60,
+          "title": "Detectedsubject",
+          "type": "string"
+        },
         "visualMode": {
           "enum": [
             "trajectory",

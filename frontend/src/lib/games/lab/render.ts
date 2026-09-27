@@ -228,7 +228,8 @@ export function drawCurve(
 // FILL  ·  chemistry. A piston in a cylinder, height set by the output.
 // ---------------------------------------------------------------------------
 
-export function drawFill(f: Frame, value: number, level: LabLevel, target: Target, hit: boolean) {
+/** value is null before the first run of a stage: the student predicts, then runs. */
+export function drawFill(f: Frame, value: number | null, level: LabLevel, target: Target, hit: boolean) {
 	const { ctx, w, h, pad } = f;
 	const cw = Math.min(220, w * 0.34);
 	const cx = w / 2 - cw / 2;
@@ -236,13 +237,20 @@ export function drawFill(f: Frame, value: number, level: LabLevel, target: Targe
 	const bot = h - pad.b - 10;
 	const ch = bot - top;
 
-	const frac = Math.max(0.02, Math.min(1, (value - level.output.min) / (level.output.max - level.output.min)));
-	const gasTop = bot - ch * frac;
-
 	// cylinder walls
 	ctx.strokeStyle = palette.axis;
 	ctx.lineWidth = 3;
 	ctx.strokeRect(cx, top, cw, ch);
+
+	if (value === null) {
+		drawFillTarget(f, level, target, cx, cw, bot, ch);
+		label(f, '? ' + level.output.unit, w / 2, bot - ch / 2, 'center', palette.muted, 22, '700');
+		label(f, 'Run the experiment to see the result', w / 2, bot + 26, 'center', palette.muted, 13, '600');
+		return;
+	}
+
+	const frac = Math.max(0.02, Math.min(1, (value - level.output.min) / (level.output.max - level.output.min)));
+	const gasTop = bot - ch * frac;
 
 	// gas
 	const grad = ctx.createLinearGradient(0, gasTop, 0, bot);
@@ -269,7 +277,12 @@ export function drawFill(f: Frame, value: number, level: LabLevel, target: Targe
 	ctx.fillRect(cx - 6, gasTop - 12, cw + 12, 12);
 	ctx.fillRect(w / 2 - 7, top - 4, 14, Math.max(0, gasTop - 12 - top + 4));
 
-	// target line
+	drawFillTarget(f, level, target, cx, cw, bot, ch);
+	label(f, `${value.toFixed(level.output.decimals)} ${level.output.unit}`, w / 2, bot + 26, 'center', palette.text, 15, '700');
+}
+
+function drawFillTarget(f: Frame, level: LabLevel, target: Target, cx: number, cw: number, bot: number, ch: number) {
+	const { ctx } = f;
 	const tFrac = (target.value - level.output.min) / (level.output.max - level.output.min);
 	const ty = bot - ch * tFrac;
 	ctx.strokeStyle = palette.target;
@@ -281,17 +294,16 @@ export function drawFill(f: Frame, value: number, level: LabLevel, target: Targe
 	ctx.stroke();
 	ctx.setLineDash([]);
 	label(f, `Target ${target.value} ${level.output.unit}`, cx + cw + 38, ty + 4, 'left', palette.target, 12, '700');
-
-	label(f, `${value.toFixed(level.output.decimals)} ${level.output.unit}`, w / 2, bot + 26, 'center', palette.text, 15, '700');
 }
 
 // ---------------------------------------------------------------------------
 // METER  ·  math, finance. A bar climbing toward a goal line.
 // ---------------------------------------------------------------------------
 
+/** value is null before the first run of a stage: the student predicts, then runs. */
 export function drawMeter(
 	f: Frame,
-	value: number,
+	value: number | null,
 	level: LabLevel,
 	target: Target,
 	past: number[],
@@ -304,7 +316,7 @@ export function drawMeter(
 	const barH = 46;
 	const y = pad.t + 46;
 
-	const scaleMax = Math.max(target.value * 1.6, value * 1.1, level.output.min + 1);
+	const scaleMax = Math.max(target.value * 1.6, (value ?? 0) * 1.1, level.output.min + 1);
 	const fx = (v: number) => left + (track * Math.max(0, Math.min(v, scaleMax))) / scaleMax;
 
 	// track
@@ -324,10 +336,12 @@ export function drawMeter(
 	}
 
 	// bar
-	ctx.fillStyle = hit ? palette.hit : palette.accent;
-	ctx.beginPath();
-	ctx.roundRect(left, y, Math.max(6, fx(value) - left), barH, 10);
-	ctx.fill();
+	if (value !== null) {
+		ctx.fillStyle = hit ? palette.hit : palette.accent;
+		ctx.beginPath();
+		ctx.roundRect(left, y, Math.max(6, fx(value) - left), barH, 10);
+		ctx.fill();
+	}
 
 	// goal line
 	ctx.strokeStyle = palette.target;
@@ -339,6 +353,8 @@ export function drawMeter(
 	label(f, `Goal ${target.value.toLocaleString()}`, fx(target.value), y - 26, 'center', palette.target, 12, '700');
 
 	// value
-	label(f, value.toLocaleString(undefined, { maximumFractionDigits: level.output.decimals }), right + 12, y + barH / 2 + 7, 'left', palette.text, 20, '700');
+	const shown = value === null ? '?' : value.toLocaleString(undefined, { maximumFractionDigits: level.output.decimals });
+	label(f, shown, right + 12, y + barH / 2 + 7, 'left', value === null ? palette.muted : palette.text, 20, '700');
+	if (value === null) label(f, 'Run the experiment to see the result', left, y + barH + 62, 'left', palette.muted, 13, '600');
 	label(f, level.output.label, left, y + barH + 40, 'left', palette.muted, 12);
 }
