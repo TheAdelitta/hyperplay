@@ -82,15 +82,25 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           package: deploy
 
+      # A successful deploy did not always switch the running app to the new files, so
+      # the previous build kept being served. Restart so the new package is what runs.
+      - name: Restart app
+        run: az webapp restart --name "$AZURE_WEBAPP_NAME" --resource-group hyperplay-rg
+
+      # Healthy is not enough: the old build is healthy too. Require the live page to
+      # reference the exact front-end bundle built in this run.
       - name: Smoke test
         run: |
-          for i in $(seq 1 30); do
-            if curl -fsS https://hyperplay.azurewebsites.net/api/v1/health | grep -q '"aiConfigured":true'; then
-              curl -fsS -o /dev/null https://hyperplay.azurewebsites.net/
-              echo "Live and configured"
+          expected=$(grep -oE 'assets/index-[A-Za-z0-9_-]+\.js' frontend/dist/index.html | head -1)
+          echo "Expecting $expected"
+          for i in $(seq 1 40); do
+            live=$(curl -fsS -H 'Cache-Control: no-cache' https://hyperplay.azurewebsites.net/ | grep -oE 'assets/index-[A-Za-z0-9_-]+\.js' | head -1 || true)
+            if [ "$live" = "$expected" ] && curl -fsS https://hyperplay.azurewebsites.net/api/v1/health | grep -q '"aiConfigured":true'; then
+              echo "Live on $expected with Azure OpenAI configured"
               exit 0
             fi
-            sleep 10
+            echo "Live bundle: ${live:-none} (attempt $i)"
+            sleep 15
           done
-          echo "Site did not become healthy with Azure OpenAI configured" >&2
+          echo "The live site is not serving this build" >&2
           exit 1

@@ -72,3 +72,20 @@ def test_rejects_non_pdf() -> None:
         assert response.json()["error"]["code"] == "UNSUPPORTED_FILE"
     finally:
         app.dependency_overrides.clear()
+
+
+def test_frontend_cache_headers(tmp_path) -> None:
+    # index.html must be re-checked on every visit so a deploy shows up on a normal
+    # refresh; hashed build files under assets/ can be cached forever.
+    from fastapi import FastAPI
+
+    from app.main import FrontendFiles
+
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "index.html").write_text("<html></html>")
+    (tmp_path / "assets" / "index-abc123.js").write_text("console.log(1)")
+    site = FastAPI()
+    site.mount("/", FrontendFiles(directory=tmp_path, html=True))
+    local = TestClient(site)
+    assert local.get("/").headers["cache-control"] == "no-cache"
+    assert "immutable" in local.get("/assets/index-abc123.js").headers["cache-control"]

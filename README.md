@@ -114,8 +114,10 @@ West US, resource group `hyperplay-rg`). The backend serves the built front end 
 so the page and the API share one origin and need no CORS or API URL configuration.
 
 Every push to `main` runs `.github/workflows/deploy.yml`. It checks and builds the front end,
-runs ruff and pytest, packages `backend/app`, `contracts/` and `frontend/dist`, and deploys.
-Nothing deploys if a check fails. GitHub signs in to Azure with OpenID Connect through the
+runs ruff and pytest, packages `backend/app`, `contracts/` and `frontend/dist`, deploys, restarts
+the app, and fails unless the live page serves the exact front-end build from that run. Nothing
+deploys if a check fails. `index.html` is sent with `Cache-Control: no-cache`, so a normal refresh
+always shows the latest deploy. Hashed files under `assets/` are cached for a year. GitHub signs in to Azure with OpenID Connect through the
 managed identity `hyperplay-deploy`, which only trusts `main` of this repository and may only
 deploy to this web app. No deploy password is stored anywhere.
 
