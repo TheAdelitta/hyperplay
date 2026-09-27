@@ -1,6 +1,6 @@
 # Hyperplay
 
-HyperPlay turns educational material into interactive experiences students can manipulate. The Svelte frontend currently includes a playable projectile simulation and a file-selection flow. The backend accepts PDF or text input, extracts the material, and validates a constrained `SimulationSpec` generated through Azure AI. Connecting generated specs and uploads to the frontend is still in progress. The learning experience centers on experimentation rather than a chat window.
+HyperPlay turns educational material into interactive experiences students can manipulate. A student picks a subject and level, uploads a chapter, and the backend asks Azure OpenAI for a **Relationship Lab** level: two sliders, the chapter's formula, and an ordered ladder of challenges (lock one control, lock the other, then both). The model returns data, never code. The backend proves every challenge is winnable before the front end renders it with one of four visual modes (`trajectory`, `curve`, `fill`, `meter`). The learning experience centers on experimentation rather than a chat window.
 
 ## Architecture
 
@@ -9,7 +9,7 @@ flowchart LR
     A["Svelte frontend"] --> B["FastAPI backend"]
     B --> C["PDF extraction"]
     C --> D["Azure AI adapter"]
-    D --> E["SimulationSpec validation"]
+    D --> E["LabLevel validation (winnability sweep)"]
     E --> A
 ```
 
@@ -25,8 +25,14 @@ flowchart LR
 ```text
 frontend/   Frontend teammate workspace
 backend/    FastAPI API, tests, and Azure adapter
-contracts/  Shared JSON Schema and example payload
+contracts/  Shared JSON Schemas and verified example levels
 ```
+
+`contracts/lab-level.schema.json` is the current contract (v2), mirrored by
+`frontend/src/lib/games/lab/types.ts` and `backend/app/models/lab.py`. The four verified levels in
+`contracts/examples/labs/` and the backend prompt in `backend/app/prompts/lab_system_prompt.txt`
+are generated from the front end with `cd frontend && npm run export:contracts`. Re-run it after
+editing `levels.ts`, `routing.ts`, or `fewshot.ts`, then run the backend tests.
 
 The frontend can begin immediately with
 [`contracts/examples/projectile-motion.json`](contracts/examples/projectile-motion.json) or the
@@ -58,21 +64,44 @@ uvicorn app.main:app --reload
 
 Open `http://127.0.0.1:8000/docs` for interactive API documentation.
 
+## Run the frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Vite proxies `/api` to `http://127.0.0.1:8000`, so run the backend alongside it. Set
+`VITE_API_PROXY` if the backend runs elsewhere.
+
 ## API
 
 | Method | Route | Purpose |
 | --- | --- | --- |
 | GET | `/api/v1/health` | Service health and Azure configuration status |
 | GET | `/api/v1/simulations/demo` | Always-available projectile-motion fixture |
-| POST | `/api/v1/simulations/generate` | Generate from a `text` field or PDF `file` |
+| POST | `/api/v1/simulations/generate` | Generate a v1 `SimulationSpec` from a `text` field or PDF `file` |
+| POST | `/api/v1/labs/generate` | Generate a Relationship Lab level (`subject`, `gradeLevel` = `middle`/`high`/`college`, optional `course`, plus `text` or PDF `file`) |
 
-The generation endpoint accepts `multipart/form-data`. PDF uploads are processed in memory and
+Both generation endpoints accept `multipart/form-data`. PDF uploads are processed in memory and
 are not persisted.
+
+`/labs/generate` returns `200` with either a `LabLevel` or `{"gameType": "unfittable", "reason", "suggestion"}`
+when the chapter has no two-variable relationship. The `X-HyperPlay-Source` header is `generated`,
+or `cache` when Azure failed and the backend replayed the level it generated earlier from the same
+file (kept in memory only). File problems return `4xx` with an error code, and AI problems return
+`502`/`503`. The front end shows file errors on the upload screen and otherwise falls back to a
+built-in level that is always labelled **Sample level**. It is never presented as generated from
+the upload.
 
 ## Configuration
 
 Copy `.env.example` to `backend/.env`. The Azure teammate must supply the endpoint, API key,
-deployment name, and API version. Never put these values in the frontend or commit `.env`.
+deployment name, and API version. The endpoint is the resource URL
+(`https://<resource>.openai.azure.com`), not the Foundry project endpoint, and the deployment is
+the name from the Deployments list, not the model name. `AZURE_OPENAI_KEY` is accepted as an
+alias for `AZURE_OPENAI_API_KEY`. Never put these values in the frontend or commit `.env`.
 
 Without Azure credentials, health and demo continue to work. Live generation returns a clear
 `AI_NOT_CONFIGURED` error. Set `ENABLE_DEVELOPMENT_FALLBACK=true` only for local integration; the
@@ -99,7 +128,9 @@ Keep `main` demoable. Coordinate any changes to `contracts/` because they affect
 
 ## MVP limitations
 
-- Supports only the `relationship_lab` template.
+- Supports only the Relationship Lab engine. Chapters without a two-variable relationship get an
+  honest "doesn't fit" screen. `frontend/src/lib/games/debug/` holds types for a future
+  Computer Science engine.
 - Accepts text-based PDFs; scanned-image OCR is not included.
 - Does not store documents or simulations.
 - Does not verify that an AI-generated scientific formula is factually correct; it validates the

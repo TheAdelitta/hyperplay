@@ -1,0 +1,118 @@
+{
+  "gameType": "lab",
+  "visualMode": "trajectory",
+  "concept": "Projectile range from launch angle and launch speed",
+  "sourceSummary": "A projectile launched from level ground travels a range set by the square of its launch speed and the sine of twice its launch angle.",
+  "formula": "R = v² sin(2θ) / g",
+  "expression": "v ^ 2 * sin(2 * theta * PI / 180) / g",
+  "controls": [
+    {
+      "key": "theta",
+      "label": "Launch angle",
+      "unit": "°",
+      "min": 15,
+      "max": 75,
+      "step": 1,
+      "default": 45,
+      "decimals": 0
+    },
+    {
+      "key": "v",
+      "label": "Launch speed",
+      "unit": "m/s",
+      "min": 5,
+      "max": 35,
+      "step": 0.5,
+      "default": 15,
+      "decimals": 1
+    }
+  ],
+  "constants": {
+    "g": 9.8
+  },
+  "output": {
+    "label": "Range",
+    "unit": "m",
+    "decimals": 1,
+    "min": 0,
+    "max": 130
+  },
+  "stages": [
+    {
+      "challenge": "The angle is fixed at 30°. Land the ball 50 meters away.",
+      "teaches": "Launch speed alone, with the angle held still.",
+      "target": {
+        "value": 50,
+        "tolerance": 1.5
+      },
+      "lock": {
+        "key": "theta",
+        "value": 30,
+        "note": "Launch angle is fixed for this challenge"
+      },
+      "hints": [
+        "Only the speed can move. Fire once and see which way you missed.",
+        "Range grows with the square of speed, so small speed changes matter more than they look.",
+        "At 30° you need a launch speed of about 24 m/s."
+      ],
+      "debriefing": "Doubling the speed would have quadrupled the range. Speed enters the range equation squared, which is why the ball overshot so quickly once you pushed it."
+    },
+    {
+      "challenge": "Now the speed is fixed at 20 m/s. Land the ball 35 meters away.",
+      "teaches": "Launch angle alone, with the speed held still.",
+      "target": {
+        "value": 35,
+        "tolerance": 0.8
+      },
+      "lock": {
+        "key": "v",
+        "value": 20,
+        "note": "Launch speed is fixed for this challenge"
+      },
+      "hints": [
+        "Only the angle can move this time. Try a low angle and a high one.",
+        "Range peaks at 45° and falls away evenly on either side.",
+        "Both 30° and 60° land in the same spot. Try each."
+      ],
+      "debriefing": "Two different angles reach the same range, one low and fast across, one high and slow. Angles that add up to 90° always land together, because sin(2θ) is symmetric around 45°."
+    },
+    {
+      "challenge": "Both controls are unlocked. Land the ball 80 meters away, then find a second way.",
+      "teaches": "Angle and speed trading off against each other.",
+      "target": {
+        "value": 80,
+        "tolerance": 2
+      },
+      "hints": [
+        "A launch closer to 45° needs less speed to go the same distance.",
+        "Find one answer, then move the angle 15° away from 45° and see how much speed you have to add.",
+        "45° at 28 m/s works. So does 30° at 30 m/s."
+      ],
+      "debriefing": "Many pairs of angle and speed land at 80 meters. The closer you launch to 45°, the less speed you need, because 45° splits the speed most evenly between staying up and moving forward."
+    }
+  ],
+  "readouts": [
+    {
+      "label": "Maximum height",
+      "expression": "v ^ 2 * sin(theta * PI / 180) ^ 2 / (2 * g)",
+      "unit": "m",
+      "decimals": 1
+    },
+    {
+      "label": "Flight time",
+      "expression": "2 * v * sin(theta * PI / 180) / g",
+      "unit": "s",
+      "decimals": 2
+    },
+    {
+      "label": "Gravity",
+      "expression": "g",
+      "unit": "m/s²",
+      "decimals": 1
+    }
+  ],
+  "completion": "You isolated speed, then angle, then traded them against each other. Speed counts twice because it is squared. Angle counts through sin(2θ), which peaks at 45° and pairs every low launch with a high one.",
+  "difficulty": "high",
+  "subject": "Physics",
+  "courseLabel": "Physics I · Grade 11"
+}
