@@ -68,7 +68,8 @@ export async function loadSample(file: string): Promise<File> {
 	return new File([await res.blob()], file, { type: 'application/pdf' });
 }
 
-function sample(subject: string, why: string): Outcome {
+/** A built-in level, always labelled as a sample and never presented as generated. */
+export function sample(subject: string, why: string): Outcome {
 	const level = fallbackFor(subject);
 	return {
 		kind: 'level',

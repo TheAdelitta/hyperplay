@@ -16,6 +16,7 @@ from app.services.lab_expression import Compiled, UnsafeExpressionError, compile
 
 GRID = 40
 MAX_SLIDER_POSITIONS = 2000
+MAX_GRID_POSITIONS = 40_000
 # gpt-4.1-mini sizes "college" tolerances so tightly that a locked stage can have a
 # single winning slider notch among ~50. When admitting a second position is a modest
 # change, loosen to it; otherwise the single answer is deliberate and precise (the
@@ -70,6 +71,19 @@ def output_function(level: LabLevel) -> Compiled:
 def _snap(value: float, lo: float, hi: float, step: float) -> float:
     value = min(max(value, lo), hi)
     return round(lo + round((value - lo) / step) * step, 10)
+
+
+def _round_sig(value: float, digits: int) -> float:
+    if value == 0:
+        return 0.0
+    return round(value, digits - 1 - math.floor(math.log10(abs(value))))
+
+
+def _format_target(value: float, decimals: int) -> str:
+    """How a target reads in challenge text: 150,000 rather than 150,000.0."""
+    if value == int(value) and abs(value) >= 100:
+        return f"{int(value):,}"
+    return f"{value:,.{decimals}f}"
 
 
 def _mentions(text: str, value: float) -> bool:
@@ -131,15 +145,23 @@ def validate_lab_level(level: LabLevel) -> LabValidation:
 
     a, b = level.controls
 
+    def steps(c) -> int:
+        return math.floor((c.max - c.min) / c.step + 1e-9) + 1
+
     def sweep(lock_key: str | None = None, lock_value: float = 0.0) -> Sweep:
         outputs: list[float] = []
         failures = 0
+        # Check the positions a student can actually reach when there are few enough of
+        # them (always for a locked stage's free slider); otherwise sample a grid.
+        exact = (
+            (steps(b) if lock_key == a.key else steps(a)) <= MAX_SLIDER_POSITIONS
+            if lock_key is not None
+            else steps(a) * steps(b) <= MAX_GRID_POSITIONS
+        )
+
         def positions(c) -> list[float]:
-            # A locked stage leaves one slider free: check every position the student can
-            # actually reach. Otherwise (or for very fine sliders) sample a grid.
-            count = math.floor((c.max - c.min) / c.step + 1e-9)
-            if lock_key is not None and count <= MAX_SLIDER_POSITIONS:
-                return [c.min + k * c.step for k in range(count + 1)]
+            if exact:
+                return [c.min + k * c.step for k in range(steps(c))]
             return [c.min + (c.max - c.min) * i / GRID for i in range(GRID + 1)]
 
         a_values = [lock_value] if lock_key == a.key else positions(a)
@@ -155,7 +177,7 @@ def validate_lab_level(level: LabLevel) -> LabValidation:
         return Sweep(lo, hi, outputs, failures)
 
     full = sweep()
-    if full.failures > (GRID + 1) ** 2 * MAX_FAILURE_SHARE:
+    if full.failures > (len(full.outputs) + full.failures) * MAX_FAILURE_SHARE:
         return LabValidation(False, level, ["Expression failed across too much of the range"])
 
     for fixed, moving in ((b, a), (a, b)):
@@ -216,14 +238,25 @@ def validate_lab_level(level: LabLevel) -> LabValidation:
             else:
                 old = target.value
                 clamped = min(max(target.value, s.lo + span * 0.15), s.hi - span * 0.15)
-                target.value = round(clamped, level.output.decimals)
+                # Move to an output the sliders are known to produce, nearest the clamped
+                # value, so the stage is winnable by construction.
+                band = [o for o in s.outputs if s.lo + span * 0.1 <= o <= s.hi - span * 0.1]
+                anchor = min(band or s.outputs, key=lambda o: abs(o - clamped))
+                target.value = round(anchor, level.output.decimals)
+                # Prefer a number a person would write (150,000, not 150,008.5) when it is
+                # still winnable.
+                for digits in (2, 3):
+                    nice = _round_sig(anchor, digits)
+                    if s.nearest(nice) <= target.tolerance:
+                        target.value = nice
+                        break
                 problems.append(f"Stage {n} target was unreachable, clamped into range")
                 if s.nearest(target.value) > target.tolerance:
                     problems.append(f"Stage {n} still unsolvable after clamping, dropped")
                     continue
                 # Keep the words true: the challenge names the new number, and hints that
                 # quote the old one would now point at a losing answer.
-                new = f"{target.value:,.{level.output.decimals}f}"
+                new = _format_target(target.value, level.output.decimals)
                 stage.challenge = _replace_number(stage.challenge, old, new)
                 stage.hints = [h for h in stage.hints if not _mentions(h, old)]
 

@@ -3,7 +3,7 @@
   import ExampleCarousel from './lib/ExampleCarousel.svelte';
   import ProjectileChallenge from './lib/ProjectileChallenge.svelte';
   import RelationshipLab from './lib/components/RelationshipLab.svelte';
-  import { generateLevel, loadSample, SAMPLES, ACCEPTED_EXTENSIONS, MAX_UPLOAD_MB } from './lib/generate';
+  import { generateLevel, loadSample, sample, SAMPLES, ACCEPTED_EXTENSIONS, MAX_UPLOAD_MB } from './lib/generate';
   let view='home', step=1, name='',level='High school',year='11th grade',school='',subject='',course='',selectedFile=null,error='',fileInput,generating=false,outcome=null;
   const years={'Middle school':['6th grade','7th grade','8th grade'],'High school':['9th grade','10th grade','11th grade','12th grade'],'College':['First year','Second year','Third year','Fourth year','Graduate']};
   function setLevel(v){level=v;year=v==='High school'?'11th grade':v==='College'?'Third year':'7th grade'}
@@ -13,6 +13,7 @@
   function drop(e){e.preventDefault();choose(e.dataTransfer.files[0])}
   async function continueUpload(){if(!subject){error='Choose a subject first.';return}error='';generating=true;const result=await generateLevel({file:selectedFile,subject,course,schoolLevel:level});generating=false;if(result.kind==='file-error'){error=result.message;return}outcome=result;view=result.kind==='unfit'?'unfit':'lab';window.scrollTo(0,0)}
   async function useSample(s){error='';try{const file=await loadSample(s.file);subject=s.subject;course=s.course;setLevel(s.schoolLevel);year=s.year;selectedFile=file}catch(e){error='That sample could not be loaded.'}}
+  function playSample(){outcome=sample(subject,'This chapter doesn’t have a relationship to explore.');view='lab';window.scrollTo(0,0)}
   function anotherChapter(){view='flow';step=2;selectedFile=null;outcome=null;error='';window.scrollTo(0,0)}
 </script>
 <svelte:head><title>{view==='home'?'HyperPlay · Learn by exploring':view==='lab'&&outcome?`${outcome.level.concept} · HyperPlay`:'Get started · HyperPlay'}</title></svelte:head>
@@ -32,5 +33,5 @@
 {:else if view==='lab'&&outcome}
 <main class="shell lab-shell"><button class="back" type="button" on:click={anotherChapter}>← Try another chapter</button><RelationshipLab level={outcome.level} source={outcome.source} notice={outcome.notice} onNewChapter={anotherChapter}/></main>
 {:else if view==='unfit'&&outcome}
-<main class="shell"><section class="panel unfit"><button class="back" type="button" on:click={anotherChapter}>← Back</button><div class="eyebrow">This chapter doesn’t fit yet</div><h1>We couldn’t find a relationship to play with.</h1><p class="lead">{outcome.reason}</p><p class="lead"><strong>What works best:</strong> {outcome.suggestion}</p><div class="button-row"><span class="quiet">HyperPlay builds experiments from chapters with a formula, a rate, or a graph.</span><button class="primary" type="button" on:click={anotherChapter}>Try another file →</button></div></section></main>
+<main class="shell"><section class="panel unfit"><button class="back" type="button" on:click={anotherChapter}>← Back</button><div class="eyebrow">This chapter doesn’t fit yet</div><h1>We couldn’t find a relationship to play with.</h1><p class="lead">{outcome.reason}</p><p class="lead"><strong>What works best:</strong> {outcome.suggestion}</p><p class="quiet">HyperPlay builds experiments from chapters with a formula, a rate, or a graph.</p><div class="unfit-actions"><button class="secondary" type="button" on:click={playSample}>Play a sample level</button><button class="primary" type="button" on:click={anotherChapter}>Try another file →</button></div></section></main>
 {/if}

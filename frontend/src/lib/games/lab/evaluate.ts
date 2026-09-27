@@ -172,13 +172,17 @@ export function validateLevel(input: LabLevel): ValidationResult {
 		const outs: number[] = [];
 		let failures = 0;
 
-		// A locked stage leaves one slider free: check every position the student can
-		// actually reach, as the backend validator does. Otherwise sample a grid.
-		const positions = (c: typeof a) => {
-			const count = Math.floor((c.max - c.min) / c.step + 1e-9);
-			if (lock && count <= 2000) return Array.from({ length: count + 1 }, (_, k) => c.min + k * c.step);
-			return Array.from({ length: N + 1 }, (_, i) => c.min + ((c.max - c.min) * i) / N);
-		};
+		// Check the positions a student can actually reach when there are few enough of
+		// them (always for a locked stage's free slider), as the backend validator does.
+		// Otherwise sample a grid.
+		const steps = (c: typeof a) => Math.floor((c.max - c.min) / c.step + 1e-9) + 1;
+		const exact = lock
+			? steps(lock.key === a.key ? b : a) <= 2000
+			: steps(a) * steps(b) <= 40000;
+		const positions = (c: typeof a) =>
+			exact
+				? Array.from({ length: steps(c) }, (_, k) => c.min + k * c.step)
+				: Array.from({ length: N + 1 }, (_, i) => c.min + ((c.max - c.min) * i) / N);
 		const aValues = lock?.key === a.key ? [lock.value] : positions(a);
 		const bValues = lock?.key === b.key ? [lock.value] : positions(b);
 
@@ -199,7 +203,7 @@ export function validateLevel(input: LabLevel): ValidationResult {
 	}
 
 	const full = sweep();
-	if (full.failures > (N + 1) * (N + 1) * 0.2) {
+	if (full.failures > (full.count + full.failures) * 0.2) {
 		return { ok: false, level, problems: ['Expression failed across too much of the range'] };
 	}
 

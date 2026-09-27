@@ -249,9 +249,10 @@ def test_clamped_target_rewrites_challenge_and_drops_stale_hints() -> None:
 
 def test_single_notch_stage_is_loosened_when_the_change_is_modest() -> None:
     # gpt-4.1-mini gave college biology stages exactly one winning slider notch where a
-    # second position was only 1.8x the tolerance away.
+    # second position was only 1.8x the tolerance away. Here the two closest positions
+    # miss the target by 5.25 and 6.68, so a tolerance of 6 admits exactly one.
     raw = load("biology")
-    raw["stages"][0]["target"]["tolerance"] = 3.0
+    raw["stages"][0]["target"]["tolerance"] = 6.0
     result = validate_lab_level(LabLevel.model_validate(raw))
     assert result.ok
     level, stage = result.level, result.level.stages[0]
@@ -270,3 +271,17 @@ def test_deliberate_single_answer_is_left_alone() -> None:
     result = validate_lab_level(LabLevel.model_validate(load("mathematics")))
     assert result.problems == []
     assert result.level.stages[1].target.tolerance == 80
+
+
+def test_moved_target_is_a_clean_number_and_the_text_matches() -> None:
+    # Live output asked students to "make linear search take 150,008.5 μs".
+    raw = load("mathematics")
+    raw["stages"][2]["target"]["value"] = 1e9
+    raw["stages"][2]["challenge"] = "Both controls are unlocked. Reach 1000000000 dollars."
+    result = validate_lab_level(LabLevel.model_validate(raw))
+    assert result.ok
+    stage = result.level.stages[2]
+    value = stage.target.value
+    assert value == float(f"{value:.2g}") or value == float(f"{value:.3g}")
+    assert "1000000000" not in stage.challenge
+    assert f"{int(value):,}" in stage.challenge
