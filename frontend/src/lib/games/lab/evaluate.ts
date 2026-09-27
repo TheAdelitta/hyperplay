@@ -172,12 +172,18 @@ export function validateLevel(input: LabLevel): ValidationResult {
 		const outs: number[] = [];
 		let failures = 0;
 
-		for (let i = 0; i <= N; i++) {
-			for (let j = 0; j <= N; j++) {
-				let va = a.min + ((a.max - a.min) * i) / N;
-				let vb = b.min + ((b.max - b.min) * j) / N;
-				if (lock?.key === a.key) va = lock.value;
-				if (lock?.key === b.key) vb = lock.value;
+		// A locked stage leaves one slider free: check every position the student can
+		// actually reach, as the backend validator does. Otherwise sample a grid.
+		const positions = (c: typeof a) => {
+			const count = Math.floor((c.max - c.min) / c.step + 1e-9);
+			if (lock && count <= 2000) return Array.from({ length: count + 1 }, (_, k) => c.min + k * c.step);
+			return Array.from({ length: N + 1 }, (_, i) => c.min + ((c.max - c.min) * i) / N);
+		};
+		const aValues = lock?.key === a.key ? [lock.value] : positions(a);
+		const bValues = lock?.key === b.key ? [lock.value] : positions(b);
+
+		for (const va of aValues) {
+			for (const vb of bValues) {
 				try {
 					const out = evaluateOutput(level, { [a.key]: va, [b.key]: vb });
 					lo = Math.min(lo, out);
@@ -186,9 +192,7 @@ export function validateLevel(input: LabLevel): ValidationResult {
 				} catch {
 					failures++;
 				}
-				if (lock?.key === b.key) break; // b is frozen, one pass is enough
 			}
-			if (lock?.key === a.key) break;
 		}
 		nearestTo = (v: number) => outs.reduce((m, o) => Math.min(m, Math.abs(o - v)), Infinity);
 		return { lo, hi, nearestTo, failures, count: outs.length };

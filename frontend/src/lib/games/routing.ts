@@ -40,7 +40,7 @@ const LAB_SCHEMA_PROMPT = `You convert a passage from an educational text into a
 Read the passage and find the central quantitative relationship it teaches. Identify the two quantities a student would most usefully be able to change, and the single quantity that results from them. Then design a short sequence of challenges that walks the student through the concept.
 
 Choose one visualMode:
-- "curve" when the relationship unfolds over time, such as population growth, radioactive decay, or cooling. Requires a series object.
+- "curve" when the relationship unfolds over time, such as population growth, radioactive decay, or cooling. Requires a series object whose "variable" is NOT one of the two control keys. If time itself is one of the sliders, use "meter" instead.
 - "fill" when the output is a physical amount contained in something, such as gas volume, tank level, or concentration.
 - "meter" when the output is an accumulating total, such as money, distance covered, or mass produced.
 - "trajectory" only for projectile motion through space. The two controls must be the launch angle in degrees (unit "°") and the launch speed in m/s, with gravity as the constant "g".

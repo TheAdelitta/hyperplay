@@ -191,3 +191,57 @@ def test_too_little_text_is_422() -> None:
 def test_grade_level_must_be_known() -> None:
     app.dependency_overrides[get_lab_generator] = lambda: FakeGenerator()
     assert post(gradeLevel="Middle school").status_code == 422
+
+
+# ------------------------------------------------- repairs found with the live model
+
+
+def test_series_variable_that_is_also_a_control_becomes_a_meter() -> None:
+    # gpt-4.1-mini did this for compound interest: t was both a slider and the time axis,
+    # so the curve's marker silently overrode the slider.
+    raw = load("mathematics")
+    raw["visualMode"] = "curve"
+    raw["series"] = {
+        "variable": "t", "label": "Years", "unit": "yr", "min": 0, "max": 40,
+        "steps": 120, "expression": raw["expression"], "markAt": 10,
+    }
+    result = validate_lab_level(LabLevel.model_validate(raw))
+    assert result.ok, result.problems
+    assert result.level.visualMode == "meter"
+    assert result.level.series is None
+    f = output_function(result.level)
+    constants = result.level.constants
+    assert f({**constants, "r": 5, "t": 40}) > f({**constants, "r": 5, "t": 10})
+
+
+def test_control_with_no_effect_is_rejected() -> None:
+    raw = load("chemistry")
+    raw["expression"] = "(n * R * 300) / P"  # temperature slider does nothing
+    result = validate_lab_level(LabLevel.model_validate(raw))
+    assert not result.ok
+    assert any("no effect" in p for p in result.problems)
+
+
+def test_out_of_reach_target_widens_range_and_keeps_the_text_true() -> None:
+    # gpt-4.1-mini capped temperature at 450 K, but 40 L at 100 kPa needs about 481 K.
+    raw = load("chemistry")
+    raw["controls"][1]["max"] = 450
+    result = validate_lab_level(LabLevel.model_validate(raw))
+    assert result.ok
+    stage = result.level.stages[1]
+    assert stage.target.value == 40.0
+    assert "40.0 L" in stage.challenge
+    assert result.level.controls[1].max >= 481
+    assert any("widened" in p for p in result.problems)
+
+
+def test_clamped_target_rewrites_challenge_and_drops_stale_hints() -> None:
+    raw = load("chemistry")
+    raw["stages"][0]["target"]["value"] = 5000  # unreachable even after widening
+    raw["stages"][0]["challenge"] = "Hold the temperature at 300 K. Compress the gas to 5000 L."
+    raw["stages"][0]["hints"].append("You need exactly 5000 L.")
+    result = validate_lab_level(LabLevel.model_validate(raw))
+    stage = result.level.stages[0]
+    assert "5000" not in stage.challenge
+    assert f"{stage.target.value:,.1f}" in stage.challenge
+    assert not any("5000" in h for h in stage.hints)
