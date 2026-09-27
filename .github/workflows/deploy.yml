@@ -1,0 +1,96 @@
+name: Deploy to Azure App Service
+
+# Every push to main builds the front end, runs the checks, and deploys the backend with
+# the built front end beside it to https://hyperplay.azurewebsites.net. Nothing deploys
+# if a check fails.
+#
+# GitHub signs in to Azure with a short-lived OpenID Connect token; there is no stored
+# password. The IDs below are identifiers, not secrets. The managed identity
+# "hyperplay-deploy" only trusts tokens from main of TheAdelitta/hyperplay and may only
+# deploy to the hyperplay web app. Azure OpenAI settings live in the web app's
+# configuration, never in this repository.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  AZURE_WEBAPP_NAME: hyperplay
+  AZURE_CLIENT_ID: e9494833-0125-4029-b31f-7c00d45b8af1
+  AZURE_TENANT_ID: 0d4da0f8-4a31-4d76-ace6-0a62331e1b84
+  AZURE_SUBSCRIPTION_ID: 5c1fa54c-9278-4111-a4c6-bcbd1c97aa2a
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # No `environment:` here: it would change the OIDC subject away from
+    # refs/heads/main, which is what the Azure federated credential trusts.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Check and build front end
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run check
+          npm run build
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Check backend
+        working-directory: backend
+        run: |
+          pip install -r requirements-dev.txt
+          ruff check .
+          pytest -q
+
+      # App Service installs requirements.txt itself (SCM_DO_BUILD_DURING_DEPLOYMENT).
+      - name: Assemble package
+        run: |
+          mkdir deploy
+          cp -r backend/app backend/requirements.txt deploy/
+          cp -r contracts deploy/contracts
+          cp -r frontend/dist deploy/static
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          package: deploy
+
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS https://hyperplay.azurewebsites.net/api/v1/health | grep -q '"aiConfigured":true'; then
+              curl -fsS -o /dev/null https://hyperplay.azurewebsites.net/
+              echo "Live and configured"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Site did not become healthy with Azure OpenAI configured" >&2
+          exit 1

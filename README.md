@@ -107,6 +107,28 @@ Without Azure credentials, health and demo continue to work. Live generation ret
 `AI_NOT_CONFIGURED` error. Set `ENABLE_DEVELOPMENT_FALLBACK=true` only for local integration; the
 fallback is a static demo and must not be represented as analysis of an uploaded document.
 
+## Hosting
+
+Live at **https://hyperplay.azurewebsites.net**, on one Azure App Service (Linux, Python 3.11,
+West US, resource group `hyperplay-rg`). The backend serves the built front end from `static/`,
+so the page and the API share one origin and need no CORS or API URL configuration.
+
+Every push to `main` runs `.github/workflows/deploy.yml`. It checks and builds the front end,
+runs ruff and pytest, packages `backend/app`, `contracts/` and `frontend/dist`, and deploys.
+Nothing deploys if a check fails. GitHub signs in to Azure with OpenID Connect through the
+managed identity `hyperplay-deploy`, which only trusts `main` of this repository and may only
+deploy to this web app. No deploy password is stored anywhere.
+
+The Azure OpenAI settings are App Service application settings, not files in the repo. To
+change them:
+
+```bash
+az webapp config appsettings set -g hyperplay-rg -n hyperplay --settings AZURE_OPENAI_DEPLOYMENT=<name>
+```
+
+Useful commands: `az webapp log tail -g hyperplay-rg -n hyperplay` streams live logs, and
+`az group delete -n hyperplay-rg` removes everything after the hackathon.
+
 ## Quality checks
 
 ```bash
